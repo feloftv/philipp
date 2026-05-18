@@ -1,4 +1,3 @@
-cat > ~/Descargas/Automatizacion/felipe-app/frontend/js/subtitles.js << 'EOF'
 let subtitlesText = '';
 let videoTitle = '';
 let saveFormat = '';
@@ -41,11 +40,7 @@ function downloadSubtitles() {
         
         if (!result.ok) {
             const errorMsg = result.data.message || result.data.error || 'Error desconocido';
-            const errorLog = `\n❌ ERROR 400\nURL: ${document.getElementById('youtubeUrl').value}\nMensaje: ${errorMsg}\nTiempo: ${new Date().toLocaleString()}\n\nCopiar esto para reportar:\n${JSON.stringify(result.data, null, 2)}`;
-            
-            console.error('=== ERROR DETAILS ===');
-            console.error(errorLog);
-            
+            console.error('Error:', errorMsg);
             showStatus('status1', 'Error: ' + errorMsg, 'error');
             throw new Error(errorMsg);
         }
@@ -53,26 +48,18 @@ function downloadSubtitles() {
         subtitlesText = result.data.data.subtitles;
         videoTitle = result.data.data.title;
 
-        console.log('✓ Success');
-        console.log('Title:', videoTitle);
+        console.log('Success - Title:', videoTitle);
         console.log('Subtitles length:', subtitlesText.length);
 
         document.getElementById('downloadReady').classList.remove('hidden');
         document.getElementById('previewContent').textContent = subtitlesText.substring(0, 300) + '...';
         document.getElementById('charCount').textContent = subtitlesText.length.toLocaleString();
 
-        const successLog = `\n✓ EXITO\nURL: ${document.getElementById('youtubeUrl').value}\nTítulo: ${videoTitle}\nCaracteres: ${subtitlesText.length}\nTiempo: ${new Date().toLocaleString()}`;
-        console.log(successLog);
-        
-        showStatus('status1', '✓ Subtítulos descargados correctamente', 'success');
+        showStatus('status1', 'Subtítulos descargados correctamente', 'success');
         document.getElementById('downloadBtn').disabled = false;
     })
     .catch(function(error) {
-        console.error('=== CATCH ERROR ===');
-        console.error('Error Message:', error.message);
-        console.error('Error Stack:', error.stack);
-        console.error('Timestamp:', new Date().toISOString());
-        
+        console.error('Error:', error.message);
         showStatus('status1', 'Error: ' + error.message, 'error');
         document.getElementById('downloadBtn').disabled = false;
     });
@@ -89,9 +76,9 @@ function promptSaveLocation(format) {
     document.getElementById('fileName').value = defaultName;
     
     if (format === 'txt') {
-        document.getElementById('modalTitle').textContent = '💾 Guardar como TXT';
+        document.getElementById('modalTitle').textContent = 'Guardar como TXT';
     } else {
-        document.getElementById('modalTitle').textContent = '🎯 Guardar como PDF';
+        document.getElementById('modalTitle').textContent = 'Guardar como PDF';
     }
     
     document.getElementById('saveModal').classList.add('show');
@@ -132,10 +119,8 @@ function saveAsTXT(fileName) {
     document.body.removeChild(link);
     
     closeSaveModal();
-    
-    console.log('✓ TXT Guardado:', fileName);
-    console.log('Descarga iniciada');
-    showStatus('status1', '✓ Archivo guardado: ' + fileName, 'success');
+    console.log('TXT guardado:', fileName);
+    showStatus('status1', 'Archivo guardado: ' + fileName, 'success');
 }
 
 function saveAsPDF(fileName) {
@@ -144,8 +129,7 @@ function saveAsPDF(fileName) {
     }
 
     showStatus('status1', 'Generando PDF...');
-    
-    console.log('📄 Generando PDF:', fileName);
+    console.log('Generando PDF:', fileName);
 
     fetch('https://jokester-sample-flavorful.ngrok-free.dev/api/subtitles/generate-pdf', {
         method: 'POST',
@@ -160,12 +144,12 @@ function saveAsPDF(fileName) {
     .then(function(response) {
         console.log('PDF Response Status:', response.status);
         if (!response.ok) {
-            throw new Error('Error generando PDF (Status: ' + response.status + ')');
+            throw new Error('Error generando PDF');
         }
         return response.blob();
     })
     .then(function(blob) {
-        console.log('PDF Blob Size:', blob.size, 'bytes');
+        console.log('PDF Size:', blob.size, 'bytes');
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
@@ -177,14 +161,11 @@ function saveAsPDF(fileName) {
         document.body.removeChild(link);
         
         closeSaveModal();
-        
-        console.log('✓ PDF Guardado:', fileName);
-        console.log('Descarga iniciada');
-        showStatus('status1', '✓ Archivo guardado: ' + fileName, 'success');
+        console.log('PDF guardado:', fileName);
+        showStatus('status1', 'Archivo guardado: ' + fileName, 'success');
     })
     .catch(function(error) {
         console.error('PDF Error:', error.message);
-        console.error('Timestamp:', new Date().toISOString());
         showStatus('status1', 'Error: ' + error.message, 'error');
     });
 }
