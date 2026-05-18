@@ -1,3 +1,4 @@
+cat > ~/Descargas/Automatizacion/felipe-app/frontend/js/subtitles.js << 'EOF'
 let subtitlesText = '';
 let videoTitle = '';
 let saveFormat = '';
@@ -45,7 +46,6 @@ function downloadSubtitles() {
             console.error('=== ERROR DETAILS ===');
             console.error(errorLog);
             
-            alert('❌ ERROR:\n\n' + errorMsg + '\n\nRevisa la consola (F12) para más detalles.');
             showStatus('status1', 'Error: ' + errorMsg, 'error');
             throw new Error(errorMsg);
         }
@@ -63,7 +63,6 @@ function downloadSubtitles() {
 
         const successLog = `\n✓ EXITO\nURL: ${document.getElementById('youtubeUrl').value}\nTítulo: ${videoTitle}\nCaracteres: ${subtitlesText.length}\nTiempo: ${new Date().toLocaleString()}`;
         console.log(successLog);
-        alert('✓ Subtítulos descargados correctamente\n\nTítulo: ' + videoTitle + '\nCaracteres: ' + subtitlesText.length);
         
         showStatus('status1', '✓ Subtítulos descargados correctamente', 'success');
         document.getElementById('downloadBtn').disabled = false;
@@ -135,7 +134,7 @@ function saveAsTXT(fileName) {
     closeSaveModal();
     
     console.log('✓ TXT Guardado:', fileName);
-    alert('✓ Archivo guardado:\n' + fileName);
+    console.log('Descarga iniciada');
     showStatus('status1', '✓ Archivo guardado: ' + fileName, 'success');
 }
 
@@ -180,12 +179,12 @@ function saveAsPDF(fileName) {
         closeSaveModal();
         
         console.log('✓ PDF Guardado:', fileName);
-        alert('✓ PDF guardado:\n' + fileName);
+        console.log('Descarga iniciada');
         showStatus('status1', '✓ Archivo guardado: ' + fileName, 'success');
     })
     .catch(function(error) {
         console.error('PDF Error:', error.message);
-        alert('❌ Error generando PDF:\n\n' + error.message);
+        console.error('Timestamp:', new Date().toISOString());
         showStatus('status1', 'Error: ' + error.message, 'error');
     });
 }

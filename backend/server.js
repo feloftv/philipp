@@ -14,7 +14,6 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const VERSION = packageJson.version;
 const BUILD_TIME = new Date().toISOString();
 
-// Seguridad
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -24,19 +23,18 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
       imgSrc: ["'self'", "data:"],
       fontSrc: ["'self'", "https:", "data:"],
-      connectSrc: ["'self'", "http://localhost:*", "https://*.anthropic.com", "https://*.onrender.com", "https://*.netlify.app"],
+      connectSrc: ["'self'", "http://localhost:*", "https://*.anthropic.com", "https://*.onrender.com", "https://*.netlify.app", "https://*.ngrok-free.dev"],
     },
   },
 }));
 
-// CORS
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
       'http://localhost:5000',
       'http://localhost:3000',
       'https://philipp-youtube.netlify.app',
-      'https://philipp-backend.onrender.com'
+      'https://jokester-sample-flavorful.ngrok-free.dev'
     ];
     
     if (!origin || allowedOrigins.includes(origin)) {
@@ -50,7 +48,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }));
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -60,17 +57,15 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Version endpoint con más detalles
 app.get('/api/version', (req, res) => {
   res.json({
-    backend: VERSION,
+    version: VERSION,
     env: NODE_ENV,
     buildTime: BUILD_TIME,
     uptime: process.uptime()
   });
 });
 
-// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -82,22 +77,17 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Body Parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Servir archivos estáticos
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Rutas
 app.use('/api/subtitles', subtitlesRouter);
 
-// Ruta principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// Manejo de errores
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   
@@ -112,12 +102,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404
 app.use((req, res) => {
   res.status(404).json({ error: 'No encontrado' });
 });
 
-// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`\n✅ Philipp Backend v${VERSION} ${NODE_ENV}`);
   console.log(`📡 API en http://localhost:${PORT}/api/subtitles`);
