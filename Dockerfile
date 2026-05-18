@@ -1,18 +1,20 @@
 FROM python:3.11-slim
 
-# Instalar yt-dlp como script ejecutable
+# Instalar ffmpeg y dependencias
 RUN apt-get update && apt-get install -y \
     curl \
     ffmpeg \
-    git \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar yt-dlp y asegurar que está en /usr/local/bin
-RUN python3 -m pip install --upgrade pip setuptools wheel && \
-    python3 -m pip install yt-dlp && \
-    ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp || true
+# Instalar Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Descargar yt-dlp como binario ejecutable
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod +x /usr/local/bin/yt-dlp && \
+    yt-dlp --version
 
 WORKDIR /app
 
