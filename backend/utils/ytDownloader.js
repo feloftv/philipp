@@ -16,7 +16,7 @@ async function downloadSubtitles(url) {
       return { success: false, error: videoInfo.error };
     }
 
-    const cmd = `cd "${tempDir}" && yt-dlp --write-auto-subs --sub-langs es --skip-download "${url}" 2>&1`;
+    const cmd = `cd "${tempDir}" && python3 -m yt_dlp --write-auto-subs --sub-langs es --skip-download "${url}" 2>&1`;
     console.log('📥 Ejecutando yt-dlp...');
     const output = execSync(cmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
     console.log(output);
@@ -82,7 +82,7 @@ function cleanWebVTT(webvttText) {
 }
 
 function formatWithTitle(title, text) {
-  const divider = '━'.repeat(70);
+  const divider = '-'.repeat(70);
   return `${title}\n${divider}\n\n${text}`;
 }
 
@@ -102,20 +102,17 @@ async function generatePDF(subtitles, title) {
       });
       doc.on('error', reject);
 
-      // Extraer título y contenido
       const lines = subtitles.split('\n');
       const titleLine = lines[0];
       const contentStart = 3;
       const content = lines.slice(contentStart).join(' ');
 
-      // Título
       doc.fontSize(16)
         .font('Helvetica-Bold')
         .text(titleLine, { align: 'center' });
 
       doc.moveDown(0.5);
 
-      // Línea divisoria con guiones simples
       doc.fontSize(11)
         .font('Helvetica')
         .fillColor('#999999')
@@ -123,7 +120,6 @@ async function generatePDF(subtitles, title) {
 
       doc.moveDown(0.8);
 
-      // Contenido
       doc.fontSize(11)
         .font('Helvetica')
         .fillColor('#000000')
@@ -142,7 +138,7 @@ async function generatePDF(subtitles, title) {
 
 async function getVideoInfo(url) {
   try {
-    const output = execSync(`yt-dlp -j "${url}"`, { encoding: 'utf8' });
+    const output = execSync(`python3 -m yt_dlp -j "${url}"`, { encoding: 'utf8' });
     const info = JSON.parse(output);
     return {
       success: true,
