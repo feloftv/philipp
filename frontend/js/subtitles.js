@@ -15,10 +15,10 @@ function downloadSubtitles() {
 
     console.log('=== PHILIPP DEBUG ===');
     console.log('URL:', url);
-    console.log('Endpoint:', 'https://philipp-backend.onrender.com/api/subtitles/download');
+    console.log('Endpoint:', 'https://jokester-sample-flavorful.ngrok-free.dev/api/subtitles/download');
     console.log('Timestamp:', new Date().toISOString());
 
-    fetch('https://philipp-backend.onrender.com/api/subtitles/download', {
+    fetch('https://jokester-sample-flavorful.ngrok-free.dev/api/subtitles/download', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -148,7 +148,7 @@ function saveAsPDF(fileName) {
     
     console.log('📄 Generando PDF:', fileName);
 
-    fetch('https://philipp-backend.onrender.com/api/subtitles/generate-pdf', {
+    fetch('https://jokester-sample-flavorful.ngrok-free.dev/api/subtitles/generate-pdf', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
