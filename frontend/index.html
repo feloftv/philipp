@@ -60,6 +60,7 @@
             text-align: center;
             margin-bottom: 50px;
             animation: slideDown 0.8s ease-out;
+            position: relative;
         }
 
         header h1 {
@@ -354,7 +355,6 @@
             margin-bottom: 0;
         }
 
-        /* Theme Toggle Switch */
         .theme-toggle-container {
             position: fixed;
             bottom: 30px;
@@ -396,7 +396,6 @@
             box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -530,8 +529,8 @@
 </head>
 <body>
     <div class="container">
-       <header>
-            <div id="versionInfo" style="position: absolute; top: 10px; right: 10px; background: #d4af37; color: #1a472a; padding: 8px 12px; border-radius: 6px; font-weight: bold; min-width: 120px; text-align: right;">loading...</div>
+        <header>
+            <div id="versionInfo" style="position: absolute; top: 10px; right: 10px; background: #d4af37; color: #1a472a; padding: 8px 12px; border-radius: 6px; font-weight: bold; min-width: 120px; text-align: right;">cargando...</div>
             <h1>Philipp</h1>
             <p>Extrae Videos de Youtube en TXT y PDF</p>
             <div class="accent-line"></div>
@@ -580,14 +579,12 @@
         </footer>
     </div>
 
-    <!-- Theme Toggle Button -->
     <div class="theme-toggle-container">
         <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
             <span id="themeIcon">🌙</span>
         </button>
     </div>
 
-    <!-- Modal para guardar archivo -->
     <div id="saveModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle">💾 Guardar Archivo</h2>
@@ -612,13 +609,42 @@
         let videoTitle = '';
         let saveFormat = '';
 
-        // Cargar tema guardado
-        window.addEventListener('DOMContentLoaded', () => {
+        function initializeTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark-mode');
-                document.getElementById('themeIcon').textContent = '☀️';
+                document.getElementById('themeIcon').textContent = '\u2600\ufe0f';
             }
+        }
+
+        function loadVersions() {
+            fetch('https://philipp-backend.onrender.com/api/version')
+                .then(function(backendResponse) {
+                    return backendResponse.json();
+                })
+                .then(function(backendData) {
+                    return fetch('/version.json').then(function(frontendResponse) {
+                        return frontendResponse.json().then(function(frontendData) {
+                            return {backend: backendData, frontend: frontendData};
+                        });
+                    });
+                })
+                .then(function(data) {
+                    var versionInfo = document.getElementById('versionInfo');
+                    if (versionInfo) {
+                        var backendTime = new Date(data.backend.buildTime).toLocaleString();
+                        versionInfo.innerHTML = '<div style="font-size: 0.7em; line-height: 1.4;">Frontend: v' + data.frontend.frontend + '<br>Backend: v' + data.backend.version + '<br>Modificado: ' + data.frontend.lastModified + '<br>Build: ' + backendTime + '</div>';
+                    }
+                })
+                .catch(function(error) {
+                    console.log('Version check failed');
+                    document.getElementById('versionInfo').textContent = 'v?.?.?';
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadVersions();
         });
 
         function toggleTheme() {
@@ -627,16 +653,16 @@
             
             if (html.classList.contains('dark-mode')) {
                 html.classList.remove('dark-mode');
-                icon.textContent = '🌙';
+                icon.textContent = '\ud83c\udf19';
                 localStorage.setItem('theme', 'light');
             } else {
                 html.classList.add('dark-mode');
-                icon.textContent = '☀️';
+                icon.textContent = '\u2600\ufe0f';
                 localStorage.setItem('theme', 'dark');
             }
         }
 
-        async function downloadSubtitles() {
+        function downloadSubtitles() {
             const url = document.getElementById('youtubeUrl').value.trim();
 
             if (!url) {
@@ -647,36 +673,37 @@
             showStatus('status1', 'Descargando subtítulos...');
             document.getElementById('downloadBtn').disabled = true;
 
-            try {
-                // const response = await fetch('/api/subtitles/download', {
-                const response = await fetch('https://philipp-backend.onrender.com/api/subtitles/download', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ url: url })
+            fetch('https://philipp-backend.onrender.com/api/subtitles/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return {ok: response.ok, data: data};
                 });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || data.error || 'Error desconocido');
+            })
+            .then(function(result) {
+                if (!result.ok) {
+                    throw new Error(result.data.message || result.data.error || 'Error desconocido');
                 }
 
-                subtitlesText = data.data.subtitles;
-                videoTitle = data.data.title;
+                subtitlesText = result.data.data.subtitles;
+                videoTitle = result.data.data.title;
 
                 document.getElementById('downloadReady').classList.remove('hidden');
                 document.getElementById('previewContent').textContent = subtitlesText.substring(0, 300) + '...';
                 document.getElementById('charCount').textContent = subtitlesText.length.toLocaleString();
 
                 showStatus('status1', '✓ Subtítulos descargados correctamente', 'success');
-
-            } catch (error) {
-                showStatus('status1', `Error: ${error.message}`, 'error');
-            } finally {
                 document.getElementById('downloadBtn').disabled = false;
-            }
+            })
+            .catch(function(error) {
+                showStatus('status1', 'Error: ' + error.message, 'error');
+                document.getElementById('downloadBtn').disabled = false;
+            });
         }
 
         function promptSaveLocation(format) {
@@ -702,7 +729,7 @@
             document.getElementById('saveModal').classList.remove('show');
         }
 
-        async function saveFile() {
+        function saveFile() {
             let fileName = document.getElementById('fileName').value.trim();
 
             if (!fileName) {
@@ -712,7 +739,7 @@
             if (saveFormat === 'txt') {
                 saveAsTXT(fileName);
             } else if (saveFormat === 'pdf') {
-                await saveAsPDF(fileName);
+                saveAsPDF(fileName);
             }
         }
 
@@ -733,73 +760,33 @@
             document.body.removeChild(link);
             
             closeSaveModal();
-            showStatus('status1', `✓ Archivo guardado: ${fileName}`, 'success');
+            showStatus('status1', '✓ Archivo guardado: ' + fileName, 'success');
         }
 
-                // Cargar versión del backend
-// Cargar versiones del backend y frontend
-// Cargar versiones del backend y frontend
-async function loadVersions() {
-  try {
-    // Backend version
-    const backendResponse = await fetch('https://philipp-backend.onrender.com/api/version');
-    const backendData = await backendResponse.json();
-    
-    // Frontend version
-    const frontendResponse = await fetch('/version.json');
-    const frontendData = await frontendResponse.json();
-    
-    const versionInfo = document.getElementById('versionInfo');
-    if (versionInfo) {
-      const backendTime = new Date(backendData.buildTime).toLocaleString();
-      versionInfo.innerHTML = '<div style="font-size: 0.7em; line-height: 1.4;">Frontend: v' + frontendData.frontend + '<br>Backend: v' + backendData.backend + '<br>Modificado: ' + frontendData.lastModified + '<br>Build: ' + backendTime + '</div>';
-    }
-  } catch (error) {
-    console.log('Version check failed');
-  }
-}
-
-window.addEventListener('DOMContentLoaded', loadVersions);
-
-window.addEventListener('DOMContentLoaded', loadVersions);        try {
-            const response = await fetch('https://philipp-backend.onrender.com/version');
-            const data = await response.json();
-            const versionBadge = document.getElementById('versionBadge');
-            if (versionBadge) {
-            versionBadge.textContent = 'v' + data.version;
-            }
-        } catch (error) {
-            console.log('Version check failed');
-        }
-        }
-
-        window.addEventListener('DOMContentLoaded', loadVersion);
-
-        async function saveAsPDF(fileName) {
+        function saveAsPDF(fileName) {
             if (!fileName.endsWith('.pdf')) {
                 fileName += '.pdf';
             }
 
             showStatus('status1', 'Generando PDF...');
 
-            try {
-                // const response = await fetch('/api/subtitles/generate-pdf', {
-                const response = await fetch('https://philipp-backend.onrender.com/api/subtitles/generate-pdf', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        subtitles: subtitlesText,
-                        title: videoTitle
-                    })
-                });
-
+            fetch('https://philipp-backend.onrender.com/api/subtitles/generate-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    subtitles: subtitlesText,
+                    title: videoTitle
+                })
+            })
+            .then(function(response) {
                 if (!response.ok) {
                     throw new Error('Error generando PDF');
                 }
-
-                const blob = await response.blob();
+                return response.blob();
+            })
+            .then(function(blob) {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.setAttribute('href', url);
@@ -811,34 +798,19 @@ window.addEventListener('DOMContentLoaded', loadVersions);        try {
                 document.body.removeChild(link);
                 
                 closeSaveModal();
-                showStatus('status1', `✓ Archivo guardado: ${fileName}`, 'success');
-
-            } catch (error) {
-                showStatus('status1', `Error: ${error.message}`, 'error');
-            }
+                showStatus('status1', '✓ Archivo guardado: ' + fileName, 'success');
+            })
+            .catch(function(error) {
+                showStatus('status1', 'Error: ' + error.message, 'error');
+            });
         }
 
-        // Cargar versión del backend
-        async function loadVersion() {
-          try {
-            const response = await fetch('https://philipp-backend.onrender.com/version');
-            const data = await response.json();
-            const versionBadge = document.getElementById('versionBadge');
-            if (versionBadge) {
-              versionBadge.textContent = 'v' + data.version;
-            }
-          } catch (error) {
-            console.log('Version check failed');
-          }
-        }
-
-        window.addEventListener('DOMContentLoaded', loadVersion);
-
-        function showStatus(id, msg, type = 'loading') {
+        function showStatus(id, msg, type) {
+            if (!type) type = 'loading';
             const el = document.getElementById(id);
-            el.className = `status show ${type}`;
+            el.className = 'status show ' + type;
             if (type === 'loading') {
-                el.innerHTML = `<span class="spinner"></span>${msg}`;
+                el.innerHTML = '<span class="spinner"></span>' + msg;
             } else {
                 el.textContent = msg;
             }
