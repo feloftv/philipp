@@ -1,4 +1,3 @@
-window.addEventListener('DOMContentLoaded', function() {
-    initializeTheme();
-    loadVersions();
+document.addEventListener('DOMContentLoaded', function() {
+    // loadVersions();
 });
