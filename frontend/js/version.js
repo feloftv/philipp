@@ -1,5 +1,5 @@
 function loadVersions() {
-    fetch('https://philipp-backend.onrender.com/api/version')
+    fetch('https://jokester-sample-flavorful.ngrok-free.dev/api/version')
         .then(function(backendResponse) {
             return backendResponse.json();
         })
