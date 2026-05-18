@@ -530,7 +530,8 @@
 </head>
 <body>
     <div class="container">
-        <header>
+       <header>
+            <div id="versionBadge" style="position: absolute; top: 10px; right: 10px; background: #d4af37; color: #1a472a; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">v1.0.0</div>
             <h1>Philipp</h1>
             <p>Extrae Videos de Youtube en TXT y PDF</p>
             <div class="accent-line"></div>
@@ -735,6 +736,22 @@
             showStatus('status1', `✓ Archivo guardado: ${fileName}`, 'success');
         }
 
+                // Cargar versión del backend
+        async function loadVersion() {
+        try {
+            const response = await fetch('https://philipp-backend.onrender.com/version');
+            const data = await response.json();
+            const versionBadge = document.getElementById('versionBadge');
+            if (versionBadge) {
+            versionBadge.textContent = 'v' + data.version;
+            }
+        } catch (error) {
+            console.log('Version check failed');
+        }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadVersion);
+
         async function saveAsPDF(fileName) {
             if (!fileName.endsWith('.pdf')) {
                 fileName += '.pdf';
@@ -777,6 +794,22 @@
                 showStatus('status1', `Error: ${error.message}`, 'error');
             }
         }
+
+        // Cargar versión del backend
+        async function loadVersion() {
+          try {
+            const response = await fetch('https://philipp-backend.onrender.com/version');
+            const data = await response.json();
+            const versionBadge = document.getElementById('versionBadge');
+            if (versionBadge) {
+              versionBadge.textContent = 'v' + data.version;
+            }
+          } catch (error) {
+            console.log('Version check failed');
+          }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadVersion);
 
         function showStatus(id, msg, type = 'loading') {
             const el = document.getElementById(id);
