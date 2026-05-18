@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: philipp-backend
+    dockerfilePath: ./Dockerfile
+    port: 5000
+    envVars:
+      - key: NODE_ENV
+        value: production
