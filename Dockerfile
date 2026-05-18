@@ -1,17 +1,17 @@
-FROM node:22
+FROM python:3.11-slim
 
-# Instalar Python3 y pip
+# Instalar Node.js
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    ffmpeg
+    curl \
+    ffmpeg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs
 
-# Instalar yt-dlp globalmente
-RUN pip3 install --break-system-packages yt-dlp
+# Instalar yt-dlp
+RUN pip install yt-dlp
 
 WORKDIR /app
 
-# Copiar archivos
 COPY backend/package*.json ./
 RUN npm install
 
