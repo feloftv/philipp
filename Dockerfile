@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 
-# Instalar ffmpeg y dependencias
+# Instalar ffmpeg, curl y otras dependencias
 RUN apt-get update && apt-get install -y \
     curl \
+    wget \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
@@ -11,10 +12,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Descargar yt-dlp como binario ejecutable
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
-    chmod +x /usr/local/bin/yt-dlp && \
-    yt-dlp --version
+# Instalar yt-dlp desde pip (en el environment global)
+RUN pip install --no-cache-dir yt-dlp
+
+# Verificar que yt-dlp está disponible
+RUN which yt-dlp && yt-dlp --version
 
 WORKDIR /app
 
