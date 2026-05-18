@@ -1,18 +1,22 @@
 FROM node:22
 
-# Instalar Python y yt-dlp
+# Instalar Python3 y pip
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    && pip3 install yt-dlp \
-    && rm -rf /var/lib/apt/lists/*
+    ffmpeg
+
+# Instalar yt-dlp globalmente
+RUN pip3 install --break-system-packages yt-dlp
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copiar archivos
+COPY backend/package*.json ./
 RUN npm install
 
-COPY . .
+COPY backend ./
+COPY frontend ../frontend
 
 EXPOSE 5000
 
