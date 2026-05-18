@@ -9,36 +9,39 @@ async function downloadSubtitles(url) {
   
   try {
     fs.mkdirSync(tempDir, { recursive: true });
-    console.log('📁 Directorio temp:', tempDir);
+    console.log('📁 Temp dir:', tempDir);
 
     const videoInfo = await getVideoInfo(url);
     if (!videoInfo.success) {
+      console.error('❌ getVideoInfo failed:', videoInfo.error);
       return { success: false, error: videoInfo.error };
     }
 
-    const cmd = `cd "${tempDir}" && python3 -m yt_dlp --write-auto-subs --sub-langs es --skip-download "${url}" 2>&1`;
-    console.log('📥 Ejecutando yt-dlp...');
+    console.log('✓ Video info:', videoInfo.title);
+
+    const cmd = `cd "${tempDir}" && yt-dlp --write-auto-subs --sub-langs es --skip-download "${url}" 2>&1`;
+    console.log('📥 Ejecutando:', cmd);
     const output = execSync(cmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
-    console.log(output);
+    console.log('Output:', output);
 
     const files = fs.readdirSync(tempDir);
-    console.log('📂 Archivos en temp:', files);
+    console.log('📂 Files:', files);
 
     const subFile = files.find(f => f.endsWith('.vtt') || f.endsWith('.srt'));
 
     if (!subFile) {
-      console.error('❌ No se encontró archivo de subtítulos');
+      console.error('❌ No subtitle file found');
       return { success: false, error: 'No se encontraron subtítulos en el video' };
     }
 
     const fullPath = path.join(tempDir, subFile);
-    console.log('📄 Leyendo:', fullPath);
+    console.log('📄 Reading:', fullPath);
     const rawSubtitles = fs.readFileSync(fullPath, 'utf8');
     
     const cleanText = cleanWebVTT(rawSubtitles);
     const formattedText = formatWithTitle(videoInfo.title, cleanText);
     
-    console.log(`✓ Subtítulos listos (${formattedText.length} caracteres)`);
+    console.log('✓ Subtitles ready:', formattedText.length, 'chars');
     
     fs.rmSync(tempDir, { recursive: true, force: true });
 
@@ -50,7 +53,7 @@ async function downloadSubtitles(url) {
     };
 
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('❌ Download error:', error.message);
     try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) {}
     return { success: false, error: error.message };
   }
@@ -77,7 +80,6 @@ function cleanWebVTT(webvttText) {
   }
 
   let cleanText = uniqueLines.join(' ');
-
   return cleanText;
 }
 
@@ -138,16 +140,26 @@ async function generatePDF(subtitles, title) {
 
 async function getVideoInfo(url) {
   try {
-    const output = execSync(`python3 -m yt_dlp -j "${url}"`, { encoding: 'utf8' });
+    console.log('🔍 Getting video info for:', url);
+    
+    const cmd = `yt-dlp -j "${url}"`;
+    console.log('📌 Command:', cmd);
+    
+    const output = execSync(cmd, { encoding: 'utf8' });
+    console.log('✓ yt-dlp output received:', output.substring(0, 100) + '...');
+    
     const info = JSON.parse(output);
+    console.log('✓ Video title:', info.title);
+    
     return {
       success: true,
       title: info.title || 'Video',
       id: info.id
     };
   } catch (error) {
-    console.error('Error getVideoInfo:', error.message);
-    return { success: false, error: 'Error obteniendo info del video' };
+    console.error('❌ getVideoInfo error:', error.message);
+    console.error('Command that failed: yt-dlp -j "' + url + '"');
+    return { success: false, error: 'Error obteniendo info del video: ' + error.message };
   }
 }
 
