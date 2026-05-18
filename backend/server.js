@@ -4,13 +4,17 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
+const packageJson = require('./package.json');
 const subtitlesRouter = require('./routes/subtitles');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const VERSION = packageJson.version;
+const BUILD_TIME = new Date().toISOString();
 
-// Seguridad - Headers con CSP permitiendo onclick
+// Seguridad
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -25,7 +29,7 @@ app.use(helmet({
   },
 }));
 
-// CORS - Permitir Netlify
+// CORS
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
@@ -46,6 +50,26 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }));
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    env: NODE_ENV, 
+    version: VERSION,
+    buildTime: BUILD_TIME
+  });
+});
+
+// Version endpoint con más detalles
+app.get('/api/version', (req, res) => {
+  res.json({
+    backend: VERSION,
+    env: NODE_ENV,
+    buildTime: BUILD_TIME,
+    uptime: process.uptime()
+  });
+});
+
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -53,6 +77,7 @@ const limiter = rateLimit({
   message: 'Demasiadas solicitudes desde esta IP, intenta más tarde.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/health' || req.path === '/api/version'
 });
 
 app.use(limiter);
@@ -66,11 +91,6 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Rutas
 app.use('/api/subtitles', subtitlesRouter);
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', env: NODE_ENV });
-});
 
 // Ruta principal
 app.get('/', (req, res) => {
@@ -99,9 +119,10 @@ app.use((req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`\n✅ Philipp Backend ${NODE_ENV} en http://localhost:${PORT}`);
-  console.log(`📡 API disponible en http://localhost:${PORT}/api/subtitles`);
-  console.log(`🏥 Health check en http://localhost:${PORT}/health\n`);
+  console.log(`\n✅ Philipp Backend v${VERSION} ${NODE_ENV}`);
+  console.log(`📡 API en http://localhost:${PORT}/api/subtitles`);
+  console.log(`🏥 Health en http://localhost:${PORT}/health`);
+  console.log(`🔖 Version en http://localhost:${PORT}/api/version\n`);
 });
 
 module.exports = app;

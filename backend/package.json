@@ -1,6 +1,6 @@
 {
   "name": "philipp-backend",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Backend para Philipp - Extrae Videos de Youtube",
   "main": "server.js",
   "scripts": {
