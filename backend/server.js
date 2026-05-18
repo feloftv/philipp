@@ -20,18 +20,31 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
       imgSrc: ["'self'", "data:"],
       fontSrc: ["'self'", "https:", "data:"],
-      connectSrc: ["'self'", "http://localhost:*", "https://*.anthropic.com"],
+      connectSrc: ["'self'", "http://localhost:*", "https://*.anthropic.com", "https://*.onrender.com", "https://*.netlify.app"],
     },
   },
 }));
 
-// CORS
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5000'],
+// CORS - Permitir Netlify
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5000',
+      'http://localhost:3000',
+      'https://philipp-youtube.netlify.app',
+      'https://philipp-backend.onrender.com'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
 
 // Rate Limiting
 const limiter = rateLimit({
