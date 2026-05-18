@@ -1,26 +1,24 @@
 FROM python:3.11-slim
 
-# Instalar Node.js y dependencias
+# Instalar yt-dlp como script ejecutable
 RUN apt-get update && apt-get install -y \
     curl \
     ffmpeg \
     git \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar yt-dlp directamente con pip en el PATH global
-RUN python3 -m pip install --no-cache-dir yt-dlp
-
-# Verificar que yt-dlp está instalado
-RUN which yt-dlp || python3 -c "import yt_dlp; print('yt-dlp installed')"
+# Instalar yt-dlp y asegurar que está en /usr/local/bin
+RUN python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install yt-dlp && \
+    ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp || true
 
 WORKDIR /app
 
-# Copiar y instalar backend
 COPY backend/package*.json ./
 RUN npm install
 
-# Copiar código
 COPY backend .
 COPY frontend ../frontend
 
