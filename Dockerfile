@@ -1,14 +1,17 @@
 FROM python:3.11-slim
 
-# Instalar Node.js
+# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     curl \
     ffmpeg \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar yt-dlp
-RUN pip install yt-dlp
+# Instalar yt-dlp globalmente (como comando ejecutable)
+RUN pip install --upgrade pip && \
+    pip install yt-dlp && \
+    which yt-dlp
 
 WORKDIR /app
 
