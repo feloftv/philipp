@@ -19,7 +19,9 @@ async function downloadSubtitles(url) {
 
     console.log('✓ Video info:', videoInfo.title);
 
-    const cmd = `cd "${tempDir}" && yt-dlp --write-auto-subs --sub-langs es --skip-download "${url}" 2>&1`;
+    // Descargar subtítulos en español, portugués e inglés
+    const languages = 'es,pt,en';
+    const cmd = `cd "${tempDir}" && yt-dlp --write-auto-subs --sub-langs ${languages} --skip-download "${url}" 2>&1`;
     console.log('📥 Ejecutando:', cmd);
     const output = execSync(cmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
     console.log('Output:', output);
@@ -27,28 +29,45 @@ async function downloadSubtitles(url) {
     const files = fs.readdirSync(tempDir);
     console.log('📂 Files:', files);
 
-    const subFile = files.find(f => f.endsWith('.vtt') || f.endsWith('.srt'));
+    // Buscar archivos de subtítulos
+    const subFiles = files.filter(f => f.endsWith('.vtt') || f.endsWith('.srt'));
 
-    if (!subFile) {
-      console.error('❌ No subtitle file found');
+    if (subFiles.length === 0) {
+      console.error('❌ No subtitle files found');
       return { success: false, error: 'No se encontraron subtítulos en el video' };
     }
 
-    const fullPath = path.join(tempDir, subFile);
-    console.log('📄 Reading:', fullPath);
-    const rawSubtitles = fs.readFileSync(fullPath, 'utf8');
+    // Procesar todos los idiomas encontrados
+    const subtitlesByLanguage = {};
     
-    const cleanText = cleanWebVTT(rawSubtitles);
-    const formattedText = formatWithTitle(videoInfo.title, cleanText);
-    
-    console.log('✓ Subtitles ready:', formattedText.length, 'chars');
+    for (const subFile of subFiles) {
+      const fullPath = path.join(tempDir, subFile);
+      console.log('📄 Reading:', fullPath);
+      
+      const rawSubtitles = fs.readFileSync(fullPath, 'utf8');
+      const cleanText = cleanWebVTT(rawSubtitles);
+      const formattedText = formatWithTitle(videoInfo.title, cleanText);
+      
+      // Detectar idioma del archivo
+      let language = 'es'; // default
+      if (subFile.includes('.pt')) language = 'pt';
+      if (subFile.includes('.en')) language = 'en';
+      
+      subtitlesByLanguage[language] = {
+        text: formattedText,
+        fileName: subFile
+      };
+      
+      console.log(`✓ Subtitles ${language} ready:`, formattedText.length, 'chars');
+    }
     
     fs.rmSync(tempDir, { recursive: true, force: true });
 
     return {
       success: true,
       title: videoInfo.title,
-      subtitles: formattedText,
+      subtitles: subtitlesByLanguage['es'] ? subtitlesByLanguage['es'].text : Object.values(subtitlesByLanguage)[0].text,
+      allSubtitles: subtitlesByLanguage,
       language: 'es'
     };
 
